@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BPM → MS Converter</title>
+    <title>Worship BPM Converter</title>
     <style>
         * {
             margin: 0;
@@ -18,16 +18,16 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            padding: 15px;
+            padding: 12px;
             color: #fff;
         }
 
         .container {
             background: rgba(255, 255, 255, 0.05);
             backdrop-filter: blur(10px);
-            border-radius: 20px;
-            padding: 25px;
-            max-width: 700px;
+            border-radius: 16px;
+            padding: 20px;
+            max-width: 600px;
             width: 100%;
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
             border: 1px solid rgba(255, 255, 255, 0.1);
@@ -35,8 +35,8 @@
 
         h1 {
             text-align: center;
-            font-size: 1.8rem;
-            margin-bottom: 8px;
+            font-size: 1.5rem;
+            margin-bottom: 4px;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
@@ -45,26 +45,26 @@
 
         .subtitle {
             text-align: center;
-            color: rgba(255, 255, 255, 0.6);
-            margin-bottom: 20px;
-            font-size: 0.85rem;
+            color: rgba(255, 255, 255, 0.5);
+            margin-bottom: 15px;
+            font-size: 0.75rem;
         }
 
         .input-section {
             background: rgba(255, 255, 255, 0.05);
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 20px;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
             border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         .bpm-display {
             text-align: center;
-            margin-bottom: 15px;
+            margin-bottom: 10px;
         }
 
         .bpm-value {
-            font-size: 3rem;
+            font-size: 2.2rem;
             font-weight: 700;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             -webkit-background-clip: text;
@@ -74,8 +74,8 @@
         }
 
         .bpm-label {
-            font-size: 0.9rem;
-            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.5);
             text-transform: uppercase;
             letter-spacing: 2px;
         }
@@ -84,28 +84,30 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 12px;
+            gap: 8px;
             flex-wrap: wrap;
+            margin-bottom: 10px;
         }
 
         .btn {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             border: none;
-            width: 40px;
-            height: 40px;
-            border-radius: 10px;
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
             color: white;
-            font-size: 1.3rem;
+            font-size: 1.1rem;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: all 0.2s ease;
             display: flex;
             align-items: center;
             justify-content: center;
+            user-select: none;
         }
 
         .btn:hover {
-            transform: scale(1.1);
-            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+            transform: scale(1.05);
+            box-shadow: 0 6px 15px rgba(102, 126, 234, 0.4);
         }
 
         .btn:active {
@@ -113,54 +115,82 @@
         }
 
         .btn-clear {
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            width: 60px;
-            height: 40px;
-            font-size: 0.8rem;
+            background: rgba(231, 76, 60, 0.8);
+            width: 50px;
+            font-size: 0.7rem;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 0.5px;
         }
 
         .btn-clear:hover {
-            background: rgba(231, 76, 60, 0.3);
-            border-color: rgba(231, 76, 60, 0.5);
+            background: rgba(231, 76, 60, 1);
+        }
+
+        /* NumPad Grid */
+        .numpad-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 5px;
+            margin-top: 10px;
+        }
+
+        .numpad-btn {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 6px;
+            padding: 10px 5px;
+            color: white;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            user-select: none;
+        }
+
+        .numpad-btn:hover {
+            background: rgba(102, 126, 234, 0.3);
+            border-color: rgba(102, 126, 234, 0.5);
+        }
+
+        .numpad-btn:active {
+            transform: scale(0.95);
+            background: rgba(102, 126, 234, 0.5);
         }
 
         input[type="number"] {
-            background: rgba(255, 255, 255, 0.1);
-            border: 2px solid rgba(255, 255, 255, 0.2);
-            border-radius: 10px;
-            padding: 12px 20px;
-            font-size: 1.3rem;
+            background: rgba(255, 255, 255, 0.08);
+            border: 2px solid rgba(255, 255, 255, 0.15);
+            border-radius: 8px;
+            padding: 10px 15px;
+            font-size: 1.2rem;
             color: white;
             text-align: center;
-            width: 100px;
+            width: 90px;
             outline: none;
-            transition: all 0.3s ease;
+            transition: all 0.2s ease;
         }
 
         input[type="number"]:focus {
             border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.3);
+            box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.3);
         }
 
         .slider-container {
-            margin-top: 15px;
+            margin-top: 12px;
         }
 
         .slider-labels {
             display: flex;
             justify-content: space-between;
-            font-size: 0.7rem;
+            font-size: 0.65rem;
             color: rgba(255, 255, 255, 0.4);
-            margin-bottom: 5px;
+            margin-bottom: 4px;
             padding: 0 2px;
         }
 
         input[type="range"] {
             width: 100%;
-            height: 6px;
+            height: 5px;
             border-radius: 3px;
             background: rgba(255, 255, 255, 0.1);
             outline: none;
@@ -169,12 +199,12 @@
 
         input[type="range"]::-webkit-slider-thumb {
             -webkit-appearance: none;
-            width: 20px;
-            height: 20px;
+            width: 16px;
+            height: 16px;
             border-radius: 50%;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             cursor: pointer;
-            box-shadow: 0 4px 10px rgba(102, 126, 234, 0.5);
+            box-shadow: 0 3px 8px rgba(102, 126, 234, 0.5);
             transition: transform 0.2s;
         }
 
@@ -183,28 +213,28 @@
         }
 
         input[type="range"]::-moz-range-thumb {
-            width: 20px;
-            height: 20px;
+            width: 16px;
+            height: 16px;
             border-radius: 50%;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             cursor: pointer;
             border: none;
-            box-shadow: 0 4px 10px rgba(102, 126, 234, 0.5);
+            box-shadow: 0 3px 8px rgba(102, 126, 234, 0.5);
         }
 
         .results-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-            gap: 10px;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
         }
 
         .result-card {
             background: rgba(255, 255, 255, 0.05);
-            border-radius: 10px;
-            padding: 12px 10px;
+            border-radius: 8px;
+            padding: 10px 6px;
             text-align: center;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            transition: all 0.2s ease;
             position: relative;
             overflow: hidden;
         }
@@ -218,7 +248,7 @@
             height: 2px;
             background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
             opacity: 0;
-            transition: opacity 0.3s;
+            transition: opacity 0.2s;
         }
 
         .result-card:hover::before {
@@ -226,71 +256,52 @@
         }
 
         .result-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
         }
 
         .note-symbol {
-            font-size: 1.4rem;
+            font-size: 1.3rem;
             margin-bottom: 2px;
             line-height: 1;
         }
 
         .note-value {
-            font-size: 0.75rem;
-            color: rgba(255, 255, 255, 0.6);
-            margin-bottom: 4px;
+            font-size: 0.65rem;
+            color: rgba(255, 255, 255, 0.5);
+            margin-bottom: 3px;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 0.5px;
         }
 
         .ms-value {
-            font-size: 1.1rem;
+            font-size: 0.95rem;
             font-weight: 600;
             color: #fff;
             font-variant-numeric: tabular-nums;
         }
 
         .highlight {
-            background: rgba(102, 126, 234, 0.15);
+            background: rgba(102, 126, 234, 0.2);
             border-color: rgba(102, 126, 234, 0.4);
         }
 
-        .keyboard-hint {
-            text-align: center;
-            margin-top: 15px;
-            padding: 10px;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 6px;
-            font-size: 0.75rem;
-            color: rgba(255, 255, 255, 0.5);
+        .highlight .note-value {
+            color: rgba(200, 200, 255, 0.8);
         }
 
-        .keyboard-hint kbd {
-            background: rgba(255, 255, 255, 0.2);
-            padding: 2px 6px;
-            border-radius: 3px;
-            font-family: monospace;
-            color: #fff;
-            font-size: 0.7rem;
-        }
-
-        @media (max-width: 600px) {
-            h1 { font-size: 1.5rem; }
-            .bpm-value { font-size: 2.5rem; }
-            .container { padding: 18px; }
+        @media (max-width: 500px) {
+            h1 { font-size: 1.3rem; }
+            .bpm-value { font-size: 1.8rem; }
             .results-grid { grid-template-columns: repeat(3, 1fr); }
-        }
-
-        @media (max-width: 400px) {
-            .results-grid { grid-template-columns: repeat(2, 1fr); }
+            .container { padding: 15px; }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>BPM → MS Converter</h1>
-        <p class="subtitle">Millisekunden für musikalische Notenwerte</p>
+        <h1>Worship BPM Converter</h1>
+        <p class="subtitle">Bethel • Hillsong • Outbreakband • Elevation</p>
 
         <div class="input-section">
             <div class="bpm-display">
@@ -299,25 +310,35 @@
             </div>
 
             <div class="input-controls">
-                <button class="btn" onclick="changeBPM(-1)" title="Pfeil nach unten">−</button>
-                <input type="number" id="bpmInput" value="120" min="20" max="280" step="1">
-                <button class="btn" onclick="changeBPM(1)" title="Pfeil nach oben">+</button>
-                <button class="btn btn-clear" onclick="clearInput()" title="Zurücksetzen">Clear</button>
+                <button class="btn" onclick="changeBPM(-1)" title="-1 BPM">−</button>
+                <input type="number" id="bpmInput" value="120" min="60" max="150" step="1" readonly>
+                <button class="btn" onclick="changeBPM(1)" title="+1 BPM">+</button>
+                <button class="btn btn-clear" onclick="clearBPM()" title="Zurücksetzen">Clear</button>
+            </div>
+
+            <!-- NumPad -->
+            <div class="numpad-grid">
+                <button class="numpad-btn" onclick="addDigit('1')">1</button>
+                <button class="numpad-btn" onclick="addDigit('2')">2</button>
+                <button class="numpad-btn" onclick="addDigit('3')">3</button>
+                <button class="numpad-btn" onclick="addDigit('4')">4</button>
+                <button class="numpad-btn" onclick="addDigit('5')">5</button>
+                <button class="numpad-btn" onclick="addDigit('6')">6</button>
+                <button class="numpad-btn" onclick="addDigit('7')">7</button>
+                <button class="numpad-btn" onclick="addDigit('8')">8</button>
+                <button class="numpad-btn" onclick="addDigit('9')">9</button>
+                <button class="numpad-btn" onclick="addDigit('0')" style="grid-column: span 2;">0</button>
             </div>
 
             <div class="slider-container">
                 <div class="slider-labels">
-                    <span>20</span>
                     <span>60</span>
+                    <span>72</span>
+                    <span>96</span>
                     <span>120</span>
-                    <span>180</span>
-                    <span>280</span>
+                    <span>150</span>
                 </div>
-                <input type="range" id="bpmSlider" min="20" max="280" value="120">
-            </div>
-
-            <div class="keyboard-hint">
-                <kbd>↑</kbd> <kbd>↓</kbd> Tasten oder direkt eingeben • <kbd>0</kbd>-<kbd>9</kbd> Numpad unterstützt
+                <input type="range" id="bpmSlider" min="60" max="150" value="120">
             </div>
         </div>
 
@@ -332,19 +353,18 @@
         const bpmDisplay = document.getElementById('bpmDisplay');
         const resultsGrid = document.getElementById('resultsGrid');
 
-        // Notenwerte Konfiguration (ohne Ganze Note)
+        let currentInput = '120';
+
+        // Worship-optimierte Notenwerte
         const noteValues = [
-            { symbol: '𝅗𝅥', name: 'Halbe', fraction: 2, highlight: false },
-            { symbol: '♩', name: 'Viertel', fraction: 1, highlight: true },
-            { symbol: '♪', name: 'Achtel', fraction: 0.5, highlight: true },
-            { symbol: '𝅘𝅥𝅯', name: '16tel', fraction: 0.25, highlight: false },
-            { symbol: '𝅘𝅥𝅰', name: '32tel', fraction: 0.125, highlight: false },
-            { symbol: '3', name: '¼ Triole', fraction: 2/3, highlight: true },
+            { symbol: '♩.', name: '¼ punkt.', fraction: 1.5, highlight: true },  // #1 used in worship
+            { symbol: '♩', name: 'Viertel', fraction: 1, highlight: true },     // Standard pulse
+            { symbol: '3', name: '¼ Triole', fraction: 2/3, highlight: false },
+            { symbol: '♪.', name: '⅛ punkt.', fraction: 0.75, highlight: true }, // #2 used - modern worship
+            { symbol: '♪', name: 'Achtel', fraction: 0.5, highlight: true },     // Standard sub
             { symbol: '3', name: '⅛ Triole', fraction: 1/3, highlight: false },
-            { symbol: '3', name: '1/16 Tri', fraction: 1/6, highlight: false },
-            { symbol: '♩.', name: 'Punkt ¼', fraction: 1.5, highlight: false },
-            { symbol: '♪.', name: 'Punkt ⅛', fraction: 0.75, highlight: false },
-            { symbol: '𝅘𝅥𝅯.', name: 'Punkt 16', fraction: 0.375, highlight: false }
+            { symbol: '𝅘𝅥𝅯', name: '16tel', fraction: 0.25, highlight: false },
+            { symbol: '𝅗𝅥', name: 'Halbe', fraction: 2, highlight: false }       // Pads/Swells
         ];
 
         function calculateMS(bpm, fraction) {
@@ -352,24 +372,22 @@
         }
 
         function formatMS(ms) {
-            // Immer ms anzeigen, keine Sekunden-Umrechnung
-            if (ms >= 1000) {
-                return Math.round(ms) + ' ms';
-            } else if (ms >= 100) {
-                return Math.round(ms) + ' ms';
+            if (ms >= 100) {
+                return Math.round(ms) + 'ms';
             } else if (ms >= 10) {
-                return ms.toFixed(1) + ' ms';
+                return Math.round(ms) + 'ms';
             } else {
-                return ms.toFixed(2) + ' ms';
+                return ms.toFixed(1) + 'ms';
             }
         }
 
         function updateDisplay() {
-            let bpm = parseInt(bpmInput.value) || 120;
-            // Begrenzen auf sinnvollen Bereich
-            if (bpm < 20) bpm = 20;
-            if (bpm > 280) bpm = 280;
+            let bpm = parseInt(currentInput) || 120;
+            // Worship Range: 60-150
+            if (bpm < 60) bpm = 60;
+            if (bpm > 150) bpm = 150;
             
+            bpmInput.value = bpm;
             bpmDisplay.textContent = bpm;
             bpmSlider.value = bpm;
 
@@ -389,42 +407,36 @@
         }
 
         function changeBPM(delta) {
-            let newValue = (parseInt(bpmInput.value) || 120) + delta;
-            if (newValue < 20) newValue = 20;
-            if (newValue > 280) newValue = 280;
-            bpmInput.value = newValue;
+            let newValue = parseInt(currentInput) + delta;
+            if (newValue < 60) newValue = 60;
+            if (newValue > 150) newValue = 150;
+            currentInput = newValue.toString();
             updateDisplay();
         }
 
-        function clearInput() {
-            bpmInput.value = 120;
-            updateDisplay();
-            bpmInput.focus();
-            bpmInput.select();
-        }
-
-        // Event Listeners
-        bpmInput.addEventListener('input', updateDisplay);
-        
-        bpmSlider.addEventListener('input', (e) => {
-            bpmInput.value = e.target.value;
-            updateDisplay();
-        });
-
-        // Numpad 0-9 Unterstützung
-        document.addEventListener('keydown', (e) => {
-            // Numpad Tasten (NumLock aus)
-            if (document.activeElement !== bpmInput) {
-                if (e.key >= '0' && e.key <= '9') {
-                    bpmInput.focus();
-                    bpmInput.value = e.key;
-                    updateDisplay();
-                    e.preventDefault();
-                }
+        function addDigit(digit) {
+            if (currentInput.length >= 3) {
+                currentInput = digit;
+            } else {
+                currentInput = currentInput + digit;
             }
+            // Entferne führende Nullen
+            currentInput = currentInput.replace(/^0+/, '') || '0';
+            updateDisplay();
+        }
+
+        function clearBPM() {
+            currentInput = '120';
+            updateDisplay();
+        }
+
+        // Slider
+        bpmSlider.addEventListener('input', (e) => {
+            currentInput = e.target.value;
+            updateDisplay();
         });
 
-        // Tastatursteuerung
+        // Tastatur (Pfeiltasten)
         document.addEventListener('keydown', (e) => {
             if (e.key === 'ArrowUp') {
                 e.preventDefault();
@@ -432,17 +444,15 @@
             } else if (e.key === 'ArrowDown') {
                 e.preventDefault();
                 changeBPM(-1);
-            } else if (e.key === 'Escape') {
-                clearInput();
+            } else if (e.key >= '0' && e.key <= '9') {
+                addDigit(e.key);
+            } else if (e.key === 'Escape' || e.key === 'c' || e.key === 'C') {
+                clearBPM();
             }
         });
 
         // Initialisierung
         updateDisplay();
-        
-        // Fokus auf Input beim Start
-        bpmInput.focus();
-        bpmInput.select();
     </script>
 </body>
 </html>
