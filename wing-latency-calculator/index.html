@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Behringer WING Latency Calculator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            color: #fff;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            background: linear-gradient(90deg, #e94560, #ff6b6b);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #8892b0;
+            margin-bottom: 30px;
+        }
+        
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .channel-column {
+            background: rgba(255,255,255,0.05);
+            border-radius: 20px;
+            padding: 20px;
+            border: 1px solid rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+        }
+        
+        .column-header {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .channel-header { border-color: #e94560; }
+        .bus-header { border-color: #0f9b0f; }
+        .main-header { border-color: #4facfe; }
+        
+        .chain-container {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            min-height: 400px;
+        }
+        
+        .chain-item {
+            background: rgba(255,255,255,0.08);
+            border-radius: 12px;
+            padding: 12px 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: grab;
+            transition: all 0.2s;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .chain-item:hover {
+            background: rgba(255,255,255,0.12);
+            transform: translateX(3px);
+        }
+        
+        .chain-item.dragging {
+            opacity: 0.5;
+        }
+        
+        .item-info h4 {
+            font-size: 0.95rem;
+            margin-bottom: 3px;
+        }
+        
+        .item-info span {
+            font-size: 0.75rem;
+            color: #8892b0;
+        }
+        
+        .item-latency {
+            text-align: right;
+        }
+        
+        .samples {
+            font-size: 0.9rem;
+            color: #4facfe;
+            font-weight: 600;
+        }
+        
+        .ms {
+            font-size: 0.75rem;
+            color: #64ffda;
+        }
+        
+        .delete-btn {
+            background: rgba(233,69,96,0.3);
+            border: none;
+            color: #fff;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            cursor: pointer;
+            margin-left: 10px;
+            font-size: 1rem;
+            transition: all 0.2s;
+        }
+        
+        .delete-btn:hover {
+            background: rgba(233,69,96,0.6);
+        }
+        
+        .fx-panel {
+            background: rgba(0,0,0,0.3);
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .fx-panel h3 {
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+        }
+        
+        .fx-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 10px;
+        }
+        
+        .fx-btn {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 10px;
+            padding: 12px;
+            color: #fff;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: left;
+            font-size: 0.85rem;
+        }
+        
+        .fx-btn:hover {
+            background: rgba(255,255,255,0.15);
+            border-color: #4facfe;
+            transform: translateY(-2px);
+        }
+        
+        .fx-btn.premium { border-left: 3px solid #ffd700; }
+        .fx-btn.standard { border-left: 3px solid #0f9b0f; }
+        .fx-btn.channel { border-left: 3px solid #e94560; }
+        .fx-btn.freq-dep { border-left: 3px solid #ff6b35; }
+        
+        .fx-btn small {
+            display: block;
+            color: #8892b0;
+            font-size: 0.7rem;
+            margin-top: 4px;
+        }
+        
+        .results-panel {
+            background: rgba(0,0,0,0.4);
+            border-radius: 20px;
+            padding: 25px;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 30px;
+            text-align: center;
+        }
+        
+        .result-block h2 {
+            font-size: 2.5rem;
+            background: linear-gradient(90deg, #4facfe, #00f2fe);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .result-block p {
+            color: #8892b0;
+            margin-top: 5px;
+        }
+        
+        .comparison-warning {
+            background: rgba(255,193,7,0.2);
+            border: 1px solid rgba(255,193,7,0.5);
+            border-radius: 12px;
+            padding: 15px;
+            margin-top: 20px;
+            display: none;
+        }
+        
+        .comparison-warning.show {
+            display: block;
+        }
+        
+        .comparison-warning h4 {
+            color: #ffc107;
+            margin-bottom: 8px;
+        }
+        
+        .preset-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .preset-btn {
+            background: rgba(79,172,254,0.2);
+            border: 1px solid rgba(79,172,254,0.4);
+            color: #4facfe;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.85rem;
+        }
+        
+        .preset-btn:hover {
+            background: rgba(79,172,254,0.4);
+        }
+        
+        .clear-btn {
+            background: rgba(233,69,96,0.2);
+            border-color: rgba(233,69,96,0.4);
+            color: #e94560;
+        }
+        
+        .clear-btn:hover {
+            background: rgba(233,69,96,0.4);
+        }
+        
+        .base-latency {
+            font-size: 0.8rem;
+            color: #64ffda;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎛️ Behringer WING Latency Calculator</h1>
+        <p class="subtitle">Effekt-Latenz für Channels, Buses und Main - Vergleiche Signalwege in Samples und Millisekunden</p>
+        
+        <div class="preset-buttons">
+            <button class="preset-btn" onclick="loadPreset('channelBasic')">Channel: HPF+EQ+Comp</button>
+            <button class="preset-btn" onclick="loadPreset('channelFull')">Channel: Full Processing</button>
+            <button class="preset-btn" onclick="loadPreset('busVerb')">Bus: Reverb Send</button>
+            <button class="preset-btn" onclick="loadPreset('mainMaster')">Main: Master Bus</button>
+            <button class="preset-btn clear-btn" onclick="clearAll()">Alles Löschen</button>
+        </div>
+        
+        <div class="main-grid">
+            <div class="channel-column">
+                <div class="column-header channel-header">
+                    <span>🎤 Channel Strip</span>
+                    <span id="ch-total">0 samples</span>
+                </div>
+                <p class="base-latency">Base: 32 samples (0.67ms) @ 48kHz</p>
+                <div class="chain-container" id="channel-chain" data-type="channel"></div>
+            </div>
+            
+            <div class="channel-column">
+                <div class="column-header bus-header">
+                    <span>🚌 Bus / Aux</span>
+                    <span id="bus-total">0 samples</span>
+                </div>
+                <p class="base-latency">Base: 32 samples (0.67ms) @ 48kHz</p>
+                <div class="chain-container" id="bus-chain" data-type="bus"></div>
+            </div>
+            
+            <div class="channel-column">
+                <div class="column-header main-header">
+                    <span>🎚️ Main / Master</span>
+                    <span id="main-total">0 samples</span>
+                </div>
+                <p class="base-latency">Base: 32 samples (0.67ms) @ 48kHz</p>
+                <div class="chain-container" id="main-chain" data-type="main"></div>
+            </div>
+        </div>
+        
+        <div class="fx-panel">
+            <h3>➕ Effekte hinzufügen (Klicken zum Einfügen)</h3>
+            <div class="fx-grid" id="fx-buttons"></div>
+        </div>
+        
+        <div class="results-panel">
+            <div class="result-block">
+                <h2 id="total-samples">96</h2>
+                <p>Gesamt Samples (3x Base)</p>
+            </div>
+            <div class="result-block">
+                <h2 id="total-ms">2.00</h2>
+                <p>Gesamt Millisekunden @ 48kHz</p>
+            </div>
+            <div class="result-block">
+                <h2 id="max-diff">0</h2>
+                <p>Max. Differenz zwischen Paths</p>
+            </div>
+        </div>
+        
+        <div class="comparison-warning" id="warning">
+            <h4>⚠️ Latenz-Kompensation erforderlich</h4>
+            <p id="warning-text">Die Signalwege haben unterschiedliche Latenzen. Aktiviere Delay-Kompensation im WING für synchrones Monitoring.</p>
+        </div>
+    </div>
+
+    <script>
+        const FX_DATA = {
+            // Premium Reverbs (32 samples)
+            'hall': { name: 'Hall Reverb', samples: 32, type: 'premium', category: 'Reverb' },
+            'room': { name: 'Room Reverb', samples: 32, type: 'premium', category: 'Reverb' },
+            'chamber': { name: 'Chamber Reverb', samples: 32, type: 'premium', category: 'Reverb' },
+            'plate': { name: 'Plate Reverb', samples: 32, type: 'premium', category: 'Reverb' },
+            'concert': { name: 'Concert Reverb', samples: 32, type: 'premium', category: 'Reverb' },
+            'ambience': { name: 'Ambience', samples: 32, type: 'premium', category: 'Reverb' },
+            'vss3': { name: 'VSS3 Reverb', samples: 32, type: 'premium', category: 'Reverb' },
+            'vintage-room': { name: 'Vintage Room', samples: 32, type: 'premium', category: 'Reverb' },
+            'vintage-reverb': { name: 'Vintage Reverb', samples: 32, type: 'premium', category: 'Reverb' },
+            'vintage-plate': { name: 'Vintage Plate', samples: 32, type: 'premium', category: 'Reverb' },
+            'blue-plate': { name: 'Blue Plate', samples: 32, type: 'premium', category: 'Reverb' },
+            'gated': { name: 'Gated Reverb', samples: 32, type: 'premium', category: 'Reverb' },
+            'reverse': { name: 'Reverse Reverb', samples: 32, type: 'premium', category: 'Reverb' },
+            'delay-verb': { name: 'Delay Reverb', samples: 32, type: 'premium', category: 'Reverb' },
+            'shimmer': { name: 'Shimmer Reverb', samples: 32, type: 'premium', category: 'Reverb' },
+            'spring': { name: 'Spring Reverb', samples: 32, type: 'premium', category: 'Reverb' },
+            
+            // Delays (32 samples)
+            'wing-delay': { name: 'Wing Delay', samples: 32, type: 'premium', category: 'Delay' },
+            'ultratap': { name: 'Ultratap Delay', samples: 32, type: 'premium', category: 'Delay' },
+            'tape': { name: 'Tape Delay', samples: 32, type: 'premium', category: 'Delay' },
+            'oilcan': { name: 'Oilcan Delay', samples: 32, type: 'premium', category: 'Delay' },
+            'bbd': { name: 'BBD Delay', samples: 32, type: 'premium', category: 'Delay' },
+            
+            // Modulation (32 samples)
+            'dim-chorus': { name: 'Dimension Chorus', samples: 32, note: 'variable', type: 'premium', category: 'Modulation' },
+            'stereo-chorus': { name: 'Stereo Chorus', samples: 32, type: 'premium', category: 'Modulation' },
+            'flanger': { name: 'Stereo Flanger', samples: 32, type: 'premium', category: 'Modulation' },
+            'rotary': { name: 'Rotary Speaker', samples: 32, type: 'premium', category: 'Modulation' },
+            'phaser': { name: 'Phaser', samples: 32, type: 'premium', category: 'Modulation' },
+            'tremolo': { name: 'Tremolo/Panner', samples: 32, type: 'premium', category: 'Modulation' },
+            
+            // Special (higher latency)
+            'exciter': { name: 'Exciter', samples: 43, type: 'premium', category: 'Harmonics' },
+            'speaker': { name: 'Speaker Manager', samples: 33, type: 'premium', category: 'Tools' },
+            
+            // Frequency dependent
+            'stereo-pitch': { name: 'Stereo Pitch', samples: 0, note: 'freq-dep', type: 'premium-freq', category: 'Pitch' },
+            'dual-pitch': { name: 'Dual Pitch', samples: 32, type: 'premium', category: 'Pitch' },
+            'precision': { name: 'Precision Limiter', samples: 0, note: 'freq-dep', type: 'premium-freq', category: 'Dynamics' },
+            'combinator': { name: 'Combinator', samples: 0, note: 'freq-dep', type: 'premium-freq', category: 'Tools' },
+            'mood': { name: 'Mood Filter', samples: 0, note: 'freq-dep', type: 'premium-freq', category: 'Filter' },
+            'bodyrez': { name: 'Bodyrez', samples: 0, note: 'freq-dep', type: 'premium-freq', category: 'Tools' },
+            'psycho': { name: 'Psycho Bass', samples: 0, note: 'freq-dep', type: 'premium-freq', category: 'Bass' },
+            
+            // Channel Standard (32 samples)
+            'gate': { name: 'Gate', samples: 32, type: 'standard', category: 'Channel' },
+            'deesser': { name: 'De-esser', samples: 32, type: 'standard', category: 'Channel' },
+            'ultra-enh': { name: 'Ultra Enhancer', samples: 32, type: 'standard', category: 'Channel' },
+            'sub-oct': { name: 'Sub Octaver', samples: 32, type: 'standard', category: 'Bass' },
+            'sub-monster': { name: 'Sub Monster', samples: 32, type: 'standard', category: 'Bass' },
+            'velvet': { name: 'Velvet Imager', samples: 32, type: 'standard', category: 'Imaging' },
+            'double-vox': { name: 'Double Vocal', samples: 32, type: 'standard', category: 'Vocal' },
+            
+            // GEQ (32-36 samples)
+            'std-geq': { name: 'STD GEQ', samples: 32, type: 'standard', category: 'EQ' },
+            'pia-geq': { name: 'PIA S60 GEQ', samples: 32, type: 'standard', category: 'EQ' },
+            'master-geq': { name: 'Mastering GEQ', samples: 36, type: 'standard', category: 'EQ' },
+            
+            // Dynamics (32 samples)
+            'dyn-eq': { name: 'Triple DynEQ', samples: 32, type: 'standard', category: 'Dynamics' },
+        };
+        
+        const SAMPLE_RATE = 48000;
+        const BASE_LATENCY = 32; // Channel base
+        
+        let chains = {
+            channel: [],
+            bus: [],
+            main: []
+        };
+        
+        function samplesToMs(samples) {
+            return (samples / SAMPLE_RATE * 1000).toFixed(2);
+        }
+        
+        function createFXButtons() {
+            const container = document.getElementById('fx-buttons');
+            Object.entries(FX_DATA).forEach(([key, fx]) => {
+                const btn = document.createElement('button');
+                btn.className = `fx-btn ${fx.type}`;
+                btn.innerHTML = `
+                    ${fx.name}
+                    <small>${fx.samples > 0 ? fx.samples + ' smpl' : fx.note || 'var'}</small>
+                `;
+                btn.onclick = () => showTargetSelection(key);
+                container.appendChild(btn);
+            });
+        }
+        
+        function showTargetSelection(fxKey) {
+            const target = prompt(`"${FX_DATA[fxKey].name}" einfügen in:\n1 = Channel\n2 = Bus\n3 = Main\n\nWähle (1-3):`, "1");
+            if (target === '1') addToChain('channel', fxKey);
+            else if (target === '2') addToChain('bus', fxKey);
+            else if (target === '3') addToChain('main', fxKey);
+        }
+        
+        function addToChain(type, fxKey) {
+            chains[type].push({
+                id: Date.now() + Math.random(),
+                fx: fxKey
+            });
+            renderChain(type);
+            calculateTotals();
+        }
+        
+        function removeFromChain(type, id) {
+            chains[type] = chains[type].filter(item => item.id !== id);
+            renderChain(type);
+            calculateTotals();
+        }
+        
+        function renderChain(type) {
+            const container = document.getElementById(type + '-chain');
+            container.innerHTML = '';
+            
+            chains[type].forEach((item, index) => {
+                const fx = FX_DATA[item.fx];
+                const div = document.createElement('div');
+                div.className = 'chain-item';
+                div.draggable = true;
+                div.innerHTML = `
+                    <div class="item-info">
+                        <h4>${fx.name}</h4>
+                        <span>${fx.category}${fx.note ? ' • ' + fx.note : ''}</span>
+                    </div>
+                    <div class="item-latency">
+                        <div class="samples">${fx.samples > 0 ? '+' + fx.samples : 'var'}</div>
+                        <div class="ms">${fx.samples > 0 ? '+' + samplesToMs(fx.samples) + 'ms' : '~'}</div>
+                    </div>
+                    <button class="delete-btn" onclick="removeFromChain('${type}', ${item.id})">×</button>
+                `;
+                container.appendChild(div);
+            });
+        }
+        
+        function calculateTotals() {
+            const totals = {};
+            
+            ['channel', 'bus', 'main'].forEach(type => {
+                let total = BASE_LATENCY; // Base latency
+                chains[type].forEach(item => {
+                    const samples = FX_DATA[item.fx].samples;
+                    if (samples > 0) total += samples;
+                });
+                totals[type] = total;
+                document.getElementById(type + '-total').textContent = total + ' samples';
+            });
+            
+            // Grand total
+            const grandTotal = totals.channel + totals.bus + totals.main;
+            document.getElementById('total-samples').textContent = grandTotal;
+            document.getElementById('total-ms').textContent = samplesToMs(grandTotal);
+            
+            // Max difference
+            const values = Object.values(totals);
+            const maxDiff = Math.max(...values) - Math.min(...values);
+            document.getElementById('max-diff').textContent = maxDiff + ' smpl';
+            
+            // Warning
+            const warning = document.getElementById('warning');
+            if (maxDiff > 11) { // ~0.23ms threshold
+                warning.classList.add('show');
+                document.getElementById('warning-text').textContent = 
+                    `Differenz: ${maxDiff} samples (${samplesToMs(maxDiff)}ms) - ` +
+                    `Aktiviere Delta-T im WING für Path ${Object.keys(totals).find(k => totals[k] === Math.min(...values))}`;
+            } else {
+                warning.classList.remove('show');
+            }
+        }
+        
+        function clearAll() {
+            chains = { channel: [], bus: [], main: [] };
+            ['channel', 'bus', 'main'].forEach(renderChain);
+            calculateTotals();
+        }
+        
+        function loadPreset(name) {
+            clearAll();
+            
+            const presets = {
+                'channelBasic': {
+                    channel: ['gate', 'std-geq', 'dyn-eq']
+                },
+                'channelFull': {
+                    channel: ['gate', 'deesser', 'ultra-enh', 'dyn-eq']
+                },
+                'busVerb': {
+                    bus: ['hall', 'wing-delay']
+                },
+                'mainMaster': {
+                    main: ['master-geq', 'precision', 'exciter']
+                }
+            };
+            
+            const preset = presets[name];
+            Object.entries(preset).forEach(([type, fxList]) => {
+                fxList.forEach(fx => {
+                    chains[type].push({ id: Date.now() + Math.random(), fx: fx });
+                });
+                renderChain(type);
+            });
+            calculateTotals();
+        }
+        
+        // Initialize
+        createFXButtons();
+        calculateTotals();
+    </script>
+</body>
+</html>
