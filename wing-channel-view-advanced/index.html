@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Behringer WING Channel UI</title>
+  <link rel="stylesheet" href="css/wing-ui.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Header -->
+    <header class="app-header">
+      <h1>🔊 BEHRINGER WING</h1>
+      <div class="header-info">
+        <span>48kHz / 64 samples</span>
+        <span>Buffer: <span class="latency-badge" id="header-buffer-latency">1.33ms</span></span>
+        <span>Total: <span class="latency-badge" id="header-total-latency">0.67ms</span></span>
+      </div>
+    </header>
+
+    <!-- Effects Rack (Left Panel) -->
+    <aside class="effects-rack-panel" id="effects-rack-panel">
+      <!-- Rendered by JS -->
+    </aside>
+
+    <!-- Channel Viewport (Center) -->
+    <main class="channel-viewport">
+      <div class="channel-selector" id="channel-selector">
+        <!-- Channel tabs rendered by JS -->
+      </div>
+      <div class="channel-strip-container" id="channel-strip-container">
+        <!-- Channel strip rendered by JS -->
+      </div>
+    </main>
+
+    <!-- EQ & Info Panel (Right) -->
+    <aside class="eq-panel" id="eq-panel">
+      <div class="eq-panel-header">
+        <h3>📊 EQ Response</h3>
+      </div>
+      <div class="eq-canvas-container" id="eq-canvas-container">
+        <!-- SVG EQ visualizer -->
+      </div>
+
+      <!-- Latency Panel -->
+      <div class="latency-panel" id="latency-panel">
+        <h4>⏱️ Latency Breakdown</h4>
+        <div id="latency-breakdown">
+          <!-- Rendered by JS -->
+        </div>
+      </div>
+
+      <!-- Channel Info -->
+      <div class="channel-info-panel" id="channel-info-panel">
+        <h4>ℹ️ Channel Info</h4>
+        <div id="channel-info">
+          <!-- Rendered by JS -->
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <!-- Scripts -->
+  <script src="js/wing-core.js"></script>
+  <script src="js/eq-visualizer.js"></script>
+  <script src="js/effects-rack.js"></script>
+  <script src="js/channel-strip.js"></script>
+  <script>
+    // ============================================
+    // WING Channel UI - Main Application
+    // ============================================
+
+    const app = {
+      channels: [],
+      channelStrips: new Map(),
+      effectsRack: null,
+      eqVisualizer: null,
+      selectedChannelId: 1,
+      defaultChannels: [
+        { id: 1,  name: 'Kick',     color: 'R' },
+        { id: 2,  name: 'Snare',    color: 'G' },
+        { id: 3,  name: 'HiHat',    color: 'Y' },
+        { id: 4,  name: 'OH L',     color: 'B' },
+        { id: 5,  name: 'OH R',     color: 'B' },
+        { id: 6,  name: 'Bass',     color: 'P' },
+        { id: 7,  name: 'Guitar',   color: 'G' },
+        { id: 8,  name: 'Keys',     color: 'Y' },
+        { id: 9,  name: 'Vocal 1', color: 'R' },
+        { id: 10, name: 'Vocal 2', color: 'P' },
+        { id: 11, name: 'BGM L',    color: 'B' },
+        { id: 12, name: 'BGM R',    color: 'B' },
+        { id: 13, name: 'Talkback', color: 'Y' },
+        { id: 14, name: 'FX 1',    color: 'P' },
+        { id: 15, name: 'FX 2',    color: 'P' },
+        { id: 16, name: 'Master',  color: 'R' }
+      ]
+    };
+
+    // Initialize
+    function init() {
+      // Create channels in state
+      app.defaultChannels.forEach(ch => {
+        wingState.createChannel(ch.id, ch.name, ch.color);
+      });
+
+      // Render channel tabs
+      renderChannelTabs();
+
+      // Initialize effects rack
+      app.effectsRack = new EffectsRack('effects-rack-panel');
+      app.effectsRack.onEffectOpen = (slotIndex, effectType) => {
+        app.effectsRack.showEffectPopup(slotIndex, effectType);
+      };
+      app.effectsRack.onEffectChange = () => {
+        updateLatencyDisplay();
+      };
+
+      // Initialize EQ visualizer
+      app.eqVisualizer = new EQVisualizer('eq-canvas-container');
+      app.eqVisualizer.onParamChange = (band, param, value) => {
+        const ch = wingState.getChannel(app.selectedChannelId);
+        if (ch) {
+          ch.eq[band][param] = value;
+          // Update the channel strip knobs
+          updateEQKnobDisplay(band, param, value);
+          app.eqVisualizer.drawCurve(ch.eq);
+        }
+      };
+
+      // Select first channel
+      selectChannel(1);
+
+      // Listen for channel updates
+      wingState.on('channelUpdated', (data) => {
+        if (data.id === app.selectedChannelId && data.path.startsWith('eq.')) {
+          const ch = wingState.getChannel(app.selectedChannelId);
+          if (ch) app.eqVisualizer.drawCurve(ch.eq);
+        }
+        updateLatencyDisplay();
+      });
+
+      wingState.on('effectAssigned', () => updateLatencyDisplay());
+      wingState.on('effectRemoved', () => updateLatencyDisplay());
+
+      // Initial latency display
+      updateLatencyDisplay();
+
+      // Pre-assign some effects for demo
+      app.effectsRack.assignEffect(0, 'hall');
+      app.effectsRack.assignEffect(1, 'compressor');
+    }
+
+    function renderChannelTabs() {
+      const selector = document.getElementById('channel-selector');
+      selector.innerHTML = '';
+      
+      app.defaultChannels.forEach(ch => {
+        const tab = document.createElement('div');
+        tab.className = `channel-tab ${ch.id === app.selectedChannelId ? 'active' : ''}`;
+        tab.dataset.channelId = ch.id;
+        tab.style.borderBottom = ch.id === app.selectedChannelId 
+          ? `3px solid ${WING.COLORS[ch.color]}` 
+          : 'none';
+        tab.textContent = ch.name;
+        
+        tab.addEventListener('click', () => selectChannel(ch.id));
+        selector.appendChild(tab);
+      });
+    }
+
+    function selectChannel(channelId) {
+      // Clean up previous strip
+      const prevStrip = app.channelStrips.get(app.selectedChannelId);
+      if (prevStrip) prevStrip.destroy();
+      app.channelStrips.delete(app.selectedChannelId);
+
+      app.selectedChannelId = channelId;
+
+      // Update tabs
+      document.querySelectorAll('.channel-tab').forEach(tab => {
+        const id = parseInt(tab.dataset.channelId);
+        const ch = wingState.getChannel(id);
+        tab.classList.toggle('active', id === channelId);
+        tab.style.borderBottom = id === channelId && ch
+          ? `3px solid ${WING.COLORS[ch.color]}`
+          : 'none';
+      });
+
+      // Render channel strip
+      const container = document.getElementById('channel-strip-container');
+      container.innerHTML = `<div id="active-channel-strip"></div>`;
+      
+      const strip = new ChannelStrip('active-channel-strip', channelId);
+      app.channelStrips.set(channelId, strip);
+
+      // Update EQ visualizer
+      const ch = wingState.getChannel(channelId);
+      if (ch && app.eqVisualizer) {
+        app.eqVisualizer.drawCurve(ch.eq);
+      }
+
+      // Update channel info
+      updateChannelInfo(channelId);
+      updateLatencyDisplay();
+    }
+
+    function updateEQKnobDisplay(band, param, value) {
+      const ch = wingState.getChannel(app.selectedChannelId);
+      if (!ch) return;
+      
+      // Update knob canvas
+      const knobId = `eq-${param === 'freq' ? 'freq' : param === 'gain' ? 'gain' : 'q'}-${app.selectedChannelId}-${band}`;
+      const canvas = document.getElementById(knobId);
+      if (canvas) {
+        canvas.dataset.value = value;
+        // Trigger redraw by finding the strip
+        const strip = app.channelStrips.get(app.selectedChannelId);
+        if (strip) {
+          const knobInfo = strip.knobElements.get(knobId);
+          if (knobInfo) knobInfo.draw();
+        }
+      }
+      
+      // Update values text
+      const valuesEl = document.getElementById(`eq-values-${app.selectedChannelId}-${band}`);
+      if (valuesEl && ch.eq[band]) {
+        const eq = ch.eq[band];
+        valuesEl.textContent = `${formatFreq(eq.freq)} | ${eq.gain > 0 ? '+' : ''}${eq.gain.toFixed(1)} | Q${eq.q.toFixed(1)}`;
+      }
+    }
+
+    function formatFreq(freq) {
+      if (freq >= 1000) return (freq / 1000).toFixed(freq >= 10000 ? 0 : 1) + 'k';
+      return Math.round(freq).toString();
+    }
+
+    function updateLatencyDisplay() {
+      const info = wingState.getLatencyInfo();
+      
+      // Header
+      const totalEl = document.getElementById('header-total-latency');
+      if (totalEl) totalEl.textContent = info.totalMs.toFixed(2) + 'ms';
+      
+      // Breakdown panel
+      const breakdown = document.getElementById('latency-breakdown');
+      if (breakdown) {
+        let html = '';
+        html += `<div class="latency-row">
+          <span class="latency-label">Buffer (64 samples)</span>
+          <span class="latency-value">${(64/48000*1000).toFixed(2)}ms</span>
+        </div>`;
+        html += `<div class="latency-row">
+          <span class="latency-label">Channel Processing</span>
+          <span class="latency-value">${info.channelMs.toFixed(2)}ms</span>
+        </div>`;
+        
+        if (info.breakdown.length > 0) {
+          info.breakdown.forEach(b => {
+            html += `<div class="latency-row">
+              <span class="latency-label">${b.name}</span>
+              <span class="latency-value">${b.ms.toFixed(2)}ms (${b.samples} smp)</span>
+            </div>`;
+          });
+        }
+        
+        html += `<div class="latency-row">
+          <span class="latency-label">Total Round-Trip</span>
+          <span class="latency-value">${(info.totalMs + 64/48000*1000).toFixed(2)}ms</span>
+        </div>`;
+        
+        breakdown.innerHTML = html;
+      }
+    }
+
+    function updateChannelInfo(channelId) {
+      const ch = wingState.getChannel(channelId);
+      const info = document.getElementById('channel-info');
+      if (!ch || !info) return;
+      
+      info.innerHTML = `
+        <div class="info-row">
+          <span class="info-label">Channel</span>
+          <span class="info-value">${ch.name}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Color</span>
+          <span class="info-value" style="color: ${WING.COLORS[ch.color]}">${ch.color}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Sample Rate</span>
+          <span class="info-value">48,000 Hz</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Buffer Size</span>
+          <span class="info-value">64 samples</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Bit Depth</span>
+          <span class="info-value">32-bit float</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Fader</span>
+          <span class="info-value">${WING.FADER.formatDb(ch.fader)} dB</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Pan</span>
+          <span class="info-value">${WING.PAN.format(ch.pan)}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Gate</span>
+          <span class="info-value">${ch.gate.enabled ? 'ON' : 'OFF'}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Compressor</span>
+          <span class="info-value">${ch.compressor.enabled ? 'ON' : 'OFF'}</span>
+        </div>
+      `;
+    }
+
+    // Boot
+    document.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html>
