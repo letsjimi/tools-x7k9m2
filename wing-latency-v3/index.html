@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>WING Latenz Rechner v3</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="app">
+  <!-- Header -->
+  <header class="header">
+    <h1>WING Latenz v3</h1>
+    <div class="sample-rate">
+      <button class="rate-btn active" data-rate="48000">48 kHz</button>
+      <button class="rate-btn" data-rate="44100">44.1 kHz</button>
+      <button class="rate-btn" data-rate="96000">96 kHz</button>
+    </div>
+  </header>
+
+  <!-- Latenz Display -->
+  <div class="latency-display">
+    <div class="latency-box input-box">
+      <span class="label">INPUT</span>
+      <span class="value" id="input-samples">0</span>
+      <span class="sub" id="input-ms">0.00 ms</span>
+    </div>
+    <div class="latency-box total-box">
+      <span class="label">GESAMT</span>
+      <span class="value big" id="total-samples">0</span>
+      <span class="sub big" id="total-ms">0.00 ms</span>
+    </div>
+    <div class="latency-box output-box">
+      <span class="label">OUTPUT</span>
+      <span class="value" id="output-samples">0</span>
+      <span class="sub" id="output-ms">0.00 ms</span>
+    </div>
+  </div>
+
+  <!-- Effekt-Rack -->
+  <div class="rack-section">
+    <div class="rack-header">
+      <h2>Effekt-Rack</h2>
+      <button class="clear-btn" id="clear-all">✕ Alle</button>
+    </div>
+    <div class="active-effects" id="active-effects"></div>
+  </div>
+
+  <!-- Effekt-Auswahl -->
+  <div class="fx-section">
+    <div class="fx-tabs">
+      <button class="fx-tab active" data-tab="reverb">Reverb</button>
+      <button class="fx-tab" data-tab="delay">Delay</button>
+      <button class="fx-tab" data-tab="mod">Mod/FX</button>
+      <button class="fx-tab" data-tab="dynamics">Dynamics</button>
+      <button class="fx-tab" data-tab="pitch">Pitch/Amp</button>
+      <button class="fx-tab" data-tab="channel">Channel</button>
+    </div>
+    <div class="fx-grid" id="fx-grid"></div>
+  </div>
+
+  <!-- Info -->
+  <div class="info-bar">
+    <span>ⓘ Unsichere Werte in <em>Kursiv</em></span>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
